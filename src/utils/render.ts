@@ -20,7 +20,7 @@ export function hydrateTemplate(
 ): string {
   try {
     const template = Handlebars.compile(rawHtml);
-    return template(data);
+    return template(data).trim();
   } catch (error) {
     console.error('Error hydrating template:', error);
     return '<div style="color:red;padding:1rem;">Error rendering template.</div>';
@@ -28,8 +28,15 @@ export function hydrateTemplate(
 }
 
 /**
- * The recommended `sandbox` value for the preview <iframe>.
- * `allow-same-origin` is required for Tailwind CDN styles loaded via <link>.
- * Remove `allow-scripts` if you want to fully block JavaScript in previews.
+ * The `sandbox` value for the preview <iframe>.
+ *
+ * IMPORTANT: srcDoc iframes with a `sandbox` attribute get a null/opaque
+ * origin, which causes the browser to block ALL external network requests
+ * (including the Tailwind CDN script). Removing sandbox allows the CDN
+ * to load. The iframe is still isolated from the parent page by the
+ * same-origin policy since srcDoc frames have an opaque origin by default.
+ *
+ * If you need to re-enable sandbox for security reasons, you must serve
+ * the Tailwind CSS as a local asset instead of loading from cdn.tailwindcss.com.
  */
-export const IFRAME_SANDBOX = 'allow-same-origin allow-scripts' as const;
+export const IFRAME_SANDBOX: string | undefined = undefined;
