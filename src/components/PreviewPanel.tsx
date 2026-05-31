@@ -40,7 +40,7 @@ export function PreviewPanel({ isGenerating, aiData, finalHtml }: PreviewPanelPr
           // lose <script> tags that DOMParser strips for security reasons.
           const merged = finalHtml.replace(
             /(<body[^>]*>)([\s\S]*?)(<\/body>)/i,
-            `$1${bodyContent}$3`
+            (match, p1, p2, p3) => p1 + bodyContent + p3
           );
           setEditedHtml(merged);
         } else {
