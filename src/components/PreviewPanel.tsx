@@ -40,7 +40,7 @@ export function PreviewPanel({ isGenerating, aiData, finalHtml }: PreviewPanelPr
           // lose <script> tags that DOMParser strips for security reasons.
           const merged = finalHtml.replace(
             /(<body[^>]*>)([\s\S]*?)(<\/body>)/i,
-            (match, p1, p2, p3) => p1 + bodyContent + p3
+            `$1${bodyContent}$3`
           );
           setEditedHtml(merged);
         } else {
@@ -96,7 +96,6 @@ export function PreviewPanel({ isGenerating, aiData, finalHtml }: PreviewPanelPr
       ) : finalHtml ? (
         isEditing ? (
           <iframe
-            key="editor-iframe"
             ref={iframeRef}
             src="/editor/index.html"
             className="flex-1 w-full border-none"
@@ -105,7 +104,6 @@ export function PreviewPanel({ isGenerating, aiData, finalHtml }: PreviewPanelPr
           />
         ) : (
           <iframe
-            key="preview-iframe"
             srcDoc={editedHtml || finalHtml}
             className="flex-1 w-full border-none"
             title="Website Preview"
