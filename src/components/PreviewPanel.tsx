@@ -96,6 +96,7 @@ export function PreviewPanel({ isGenerating, aiData, finalHtml }: PreviewPanelPr
       ) : finalHtml ? (
         isEditing ? (
           <iframe
+            key="editor-iframe"
             ref={iframeRef}
             src="/editor/index.html"
             className="flex-1 w-full border-none"
@@ -104,6 +105,7 @@ export function PreviewPanel({ isGenerating, aiData, finalHtml }: PreviewPanelPr
           />
         ) : (
           <iframe
+            key="preview-iframe"
             srcDoc={editedHtml || finalHtml}
             className="flex-1 w-full border-none"
             title="Website Preview"
