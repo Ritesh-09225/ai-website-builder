@@ -1719,19 +1719,28 @@ function enforceStructuralState(elements) {
   const headers = root.children.filter(id => elements[id]?.isHeader);
   const footers = root.children.filter(id => elements[id]?.isFooter);
   const others = root.children.filter(id => !elements[id]?.isHeader && !elements[id]?.isFooter);
+  
+  const primaryHeader = headers.length > 0 ? [headers[0]] : [];
+  const secondaryHeaders = headers.slice(1);
+  const primaryFooter = footers.length > 0 ? [footers[footers.length - 1]] : [];
+  const secondaryFooters = footers.slice(0, footers.length - 1);
+
   // Keep compound template sections deterministic: one header first, one footer last.
-  root.children = [...headers.slice(0, 1), ...others, ...footers.slice(0, 1)];
+  // DO NOT DELETE secondary headers/footers! Put them in the content flow.
+  root.children = [...primaryHeader, ...secondaryHeaders, ...others, ...secondaryFooters, ...primaryFooter];
 
   // Force sticky footer behavior in the editor, preview, and exported pages.
-  footers.slice(0, 1).forEach(id => {
-    elements[id].style.width = '100%';
-    elements[id].style.marginTop = 'auto';
-    elements[id].style.flex = '0 0 auto';
-  });
-  headers.slice(0, 1).forEach(id => {
-    elements[id].style.width = '100%';
-    elements[id].style.flex = '0 0 auto';
-  });
+  if (primaryFooter.length > 0) {
+    const footerId = primaryFooter[0];
+    elements[footerId].style.width = '100%';
+    elements[footerId].style.marginTop = 'auto';
+    elements[footerId].style.flex = '0 0 auto';
+  }
+  if (primaryHeader.length > 0) {
+    const headerId = primaryHeader[0];
+    elements[headerId].style.width = '100%';
+    elements[headerId].style.flex = '0 0 auto';
+  }
 }
 
 function checkEmptyState() {
