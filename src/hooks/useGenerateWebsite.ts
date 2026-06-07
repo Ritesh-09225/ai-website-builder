@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, FormEvent } from "react";
 import type { Template } from "@/types/database";
+import { tryParsePartialJson } from "@/utils/parsePartialJson";
 
 export type TemplateOption = Pick<Template, "id" | "name" | "raw_html">;
 
@@ -71,8 +72,15 @@ export function useGenerateWebsite() {
         if (done) break;
         accumulated += decoder.decode(value, { stream: true });
         setStreamedJson(accumulated);
+
+        // Attempt to parse the partial JSON so the preview updates in real-time
+        const partial = tryParsePartialJson(accumulated);
+        if (partial) {
+          setAiData(partial as AiData);
+        }
       }
 
+      // Final parse: the stream is complete, so a strict parse should now succeed.
       try {
         const jsonMatch = accumulated.match(/\{[\s\S]*\}/);
         if (jsonMatch) {

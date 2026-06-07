@@ -2,10 +2,10 @@ import { NextResponse } from 'next/server';
 import { streamObject, jsonSchema } from 'ai';
 import { google } from '@ai-sdk/google';
 import { supabase } from '@/lib/supabase';
-import type { Json, Template } from '@/types/database';
+import type { Template } from '@/types/database';
+import localTemplates from '@/data/templates.json';
 
-export const runtime = 'edge';
-export const maxDuration = 60; // Up to 60s max duration if reverted to node, edge can handle more but this is safe
+export const maxDuration = 60;
 
 export async function POST(req: Request) {
   try {
@@ -21,15 +21,8 @@ export async function POST(req: Request) {
       );
     }
 
-    // Fetch the templates from GitHub.
-    const GITHUB_TEMPLATES_URL = 'https://raw.githubusercontent.com/Ritesh-09225/web-templates-api/main/templates.json';
-    const templatesRes = await fetch(GITHUB_TEMPLATES_URL, { next: { revalidate: 60 } });
-    
-    if (!templatesRes.ok) {
-      return NextResponse.json({ error: 'Failed to fetch templates' }, { status: 500 });
-    }
-
-    const templates: Template[] = await templatesRes.json();
+    // Use locally bundled templates instead of fetching from GitHub.
+    const templates = localTemplates as unknown as Template[];
     const template = templates.find(t => t.id === templateId) as Pick<Template, 'json_schema'> | null;
 
     if (!template) {

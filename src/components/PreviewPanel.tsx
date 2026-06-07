@@ -36,11 +36,13 @@ export function PreviewPanel({ isGenerating, aiData, finalHtml }: PreviewPanelPr
         // We only replace the <body> content with what the editor sends.
         if (finalHtml) {
           const bodyContent = e.data.html as string;
-          // Swap <body>...</body> content using a simple regex so we don't
-          // lose <script> tags that DOMParser strips for security reasons.
+          // Swap <body>...</body> content using a regex. We use a replacer
+          // function (not a replacement string) so that `$` characters in the
+          // AI-generated bodyContent are treated as literal text instead of
+          // being interpreted as regex backreferences (e.g. $1, $2).
           const merged = finalHtml.replace(
             /(<body[^>]*>)([\s\S]*?)(<\/body>)/i,
-            `$1${bodyContent}$3`
+            (_match, open, _oldBody, close) => `${open}${bodyContent}${close}`
           );
           setEditedHtml(merged);
         } else {
