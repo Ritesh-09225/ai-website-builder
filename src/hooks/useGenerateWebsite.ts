@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, FormEvent } from "react";
 import type { Template } from "@/types/database";
 import { tryParsePartialJson } from "@/utils/parsePartialJson";
 
-export type TemplateOption = Pick<Template, "id" | "name" | "raw_html">;
+export type TemplateOption = Pick<Template, "id" | "name" | "raw_html" | "json_schema">;
 
 export interface AiData {
   [key: string]: unknown;
@@ -109,5 +109,7 @@ export function useGenerateWebsite() {
     selectedTemplateId,
     setSelectedTemplateId,
     handleGenerate,
+    setAiData,
+    setStreamedJson,
   };
 }

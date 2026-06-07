@@ -4361,7 +4361,13 @@ window.loadAIJson = function loadAIJson() {
   }
 
   $('forge-ai-import-modal').classList.remove('active');
-  applyAIPayload(parsed, raw);
+  
+  if (window.parent && window.parent !== window && !parsed.__rawHtml) {
+    window.parent.postMessage({ type: 'HYDRATE_JSON', json: parsed, raw }, '*');
+    toast('Matching JSON to template...', 'info');
+  } else {
+    applyAIPayload(parsed, raw);
+  }
 };
 
 // File picker for .json files
@@ -4376,7 +4382,12 @@ if (aiFileInput) {
       let parsed;
       try { parsed = JSON.parse(raw); } catch (e) { parsed = { __rawHtml: raw }; }
       $('forge-ai-import-modal').classList.remove('active');
-      applyAIPayload(parsed, raw);
+      if (window.parent && window.parent !== window && !parsed.__rawHtml) {
+        window.parent.postMessage({ type: 'HYDRATE_JSON', json: parsed, raw }, '*');
+        toast('Matching JSON to template...', 'info');
+      } else {
+        applyAIPayload(parsed, raw);
+      }
     };
     reader.readAsText(file);
     aiFileInput.value = '';
@@ -4498,6 +4509,11 @@ document.addEventListener('DOMContentLoaded', () => {
              toast('Failed to load project from parent', 'error');
           }
         }
+      } else if (e.data && e.data.type === 'LOAD_FALLBACK' && e.data.json) {
+        if (typeof toast === 'function') {
+           toast('No template match found. Using generic converter.', 'warning');
+        }
+        applyAIPayload(e.data.json, e.data.raw || '');
       }
     });
   }
