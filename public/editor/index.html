@@ -1671,7 +1671,7 @@ function parseHTMLToStateNodes(htmlString, presetType = null) {
       nodeData.style[prop] = domNode.style.getPropertyValue(prop);
     }
     Array.from(domNode.attributes).forEach(attr => {
-      if (!['style', 'data-type', 'class', 'id', 'draggable'].includes(attr.name)) {
+      if (!['style', 'data-type', 'id', 'draggable'].includes(attr.name)) {
         nodeData.attributes[attr.name] = attr.value;
       }
     });
@@ -1773,6 +1773,9 @@ function createDOMFromState(id, elementsMap, lockedAncestorId = null) {
     el.dataset.customCss = nodeData.customCSS;
   }
   Object.entries(nodeData.attributes).forEach(([k, v]) => { if (k !== 'class' && k !== 'data-custom-css') el.setAttribute(k, v); });
+  if (nodeData.attributes['class'] && nodeData.attributes['class'] !== 'svg-wrapper') {
+    el.className = el.className ? el.className + ' ' + nodeData.attributes['class'] : nodeData.attributes['class'];
+  }
 
   if (nodeData.hidden) {
     el.style.opacity = '0.3';
@@ -4452,7 +4455,7 @@ document.addEventListener('DOMContentLoaded', () => {
      Next.js AI Website Builder when embedded via iframe.
      ========================================================================= -->
 <script>
-  window.addEventListener('DOMContentLoaded', () => {
+  function initForgeBridge() {
     // 1. Tell the parent app we are ready to receive data
     if (window.parent && window.parent !== window) {
       window.parent.postMessage({ type: 'FORGE_EDITOR_READY' }, '*');
@@ -4488,7 +4491,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
     });
-  });
+  }
+
+  if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', initForgeBridge);
+  } else {
+    initForgeBridge();
+  }
 </script>
 
 </body>
