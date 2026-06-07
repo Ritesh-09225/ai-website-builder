@@ -4465,9 +4465,9 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('message', (e) => {
       if (e.data && e.data.type === 'LOAD_HTML' && e.data.html) {
         try {
-          const newNodesData = window.parseHTMLToStateNodes(e.data.html);
-          if (newNodesData && newNodesData.nodes && window.BuilderState && window.BuilderState.pages[window.BuilderState.activePageId]) {
-             const elements = window.BuilderState.pages[window.BuilderState.activePageId].elements;
+          const newNodesData = parseHTMLToStateNodes(e.data.html);
+          if (newNodesData && newNodesData.nodes && typeof BuilderState !== 'undefined' && BuilderState.pages[BuilderState.activePageId]) {
+             const elements = BuilderState.pages[BuilderState.activePageId].elements;
              // Overwrite current nodes with new ones
              Object.assign(elements, newNodesData.nodes);
              elements['root'].children = newNodesData.rootElements;
@@ -4476,17 +4476,17 @@ document.addEventListener('DOMContentLoaded', () => {
              if (document.getElementById('smart-guides-layer')) {
                  document.getElementById('smart-guides-layer').innerHTML = '';
              }
-             if (typeof window.saveHistory === 'function') window.saveHistory();
-             if (typeof window.renderPage === 'function') window.renderPage();
+             if (typeof saveHistory === 'function') saveHistory();
+             if (typeof renderPage === 'function') renderPage();
              
-             if (typeof window.toast === 'function') {
-                 window.toast('Project loaded from parent application!', 'success');
+             if (typeof toast === 'function') {
+                 toast('Project loaded from parent application!', 'success');
              }
           }
         } catch (err) {
           console.error('[FORGE Bridge] Failed to load HTML:', err);
-          if (typeof window.toast === 'function') {
-             window.toast('Failed to load project from parent', 'error');
+          if (typeof toast === 'function') {
+             toast('Failed to load project from parent', 'error');
           }
         }
       }
