@@ -54,15 +54,17 @@ export function PreviewPanel({ isGenerating, aiData, finalHtml }: PreviewPanelPr
     return () => window.removeEventListener('message', handler);
   }, [finalHtml, editedHtml]);
 
-  // Push updates to editor if we toggle back in
+  // Push updates to editor if a new site is generated while editor is open
+  const lastSentHtml = useRef<string | null>(null);
   useEffect(() => {
-    if (isEditing && finalHtml && iframeRef.current) {
+    if (isEditing && finalHtml && iframeRef.current && lastSentHtml.current !== finalHtml) {
        iframeRef.current.contentWindow?.postMessage({
           type: 'LOAD_HTML',
-          html: editedHtml || finalHtml
+          html: finalHtml
        }, '*');
+       lastSentHtml.current = finalHtml;
     }
-  }, [finalHtml, isEditing, editedHtml]);
+  }, [finalHtml, isEditing]);
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col min-h-0">
