@@ -2162,10 +2162,10 @@ function saveHistory() {
   persistProject();
 
   // Broadcast current HTML to parent app if embedded
-  if (window.parent && window.parent !== window) {
+  if ((window.parent && window.parent !== window) || window.opener) {
     try {
       const exportedHtml = exportStateToHTML(page.elements, page.elements['root'].children);
-      window.parent.postMessage({ type: 'UPDATE_HTML', html: exportedHtml }, '*');
+      (window.opener || window.parent).postMessage({ type: 'UPDATE_HTML', html: exportedHtml }, '*');
     } catch (e) {
       console.warn('[FORGE] Failed to broadcast HTML update', e);
     }
@@ -3247,7 +3247,7 @@ function loadPreviewPage(pageId) {
   $('preview-page-id').textContent = `${pageId}.html`;
   enforceStructuralState(pageData.elements);
   const rawHtml = exportStateToHTML(pageData.elements, pageData.elements['root'].children);
-  const routerScript = `<script>document.addEventListener('click', e => { const link = e.target.closest('a'); if(link) { const href = link.getAttribute('href'); if(href && href.endsWith('.html')) { e.preventDefault(); window.parent.postMessage({ type: 'forge-route', pageId: href.replace('.html', '') }, '*'); } } });<\/script>`;
+  const routerScript = `<script>document.addEventListener('click', e => { const link = e.target.closest('a'); if(link) { const href = link.getAttribute('href'); if(href && href.endsWith('.html')) { e.preventDefault(); (window.opener || window.parent).postMessage({ type: 'forge-route', pageId: href.replace('.html', '') }, '*'); } } });<\/script>`;
   const animScript = `<script src="animkit.js"><\/script><script>window.addEventListener('load', () => { if(window.AnimKit) AnimKit.init(); });<\/script>`;
   $('preview-frame').srcdoc = `<!DOCTYPE html><html><head><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"><style>${globalCSS} body { overflow-y: auto !important; }</style></head><body>${rawHtml}${routerScript}${animScript}</body>
 </html>`;
@@ -4362,8 +4362,8 @@ window.loadAIJson = function loadAIJson() {
 
   $('forge-ai-import-modal').classList.remove('active');
   
-  if (window.parent && window.parent !== window && !parsed.__rawHtml) {
-    window.parent.postMessage({ type: 'HYDRATE_JSON', json: parsed, raw }, '*');
+  if (((window.parent && window.parent !== window) || window.opener) && !parsed.__rawHtml) {
+    (window.opener || window.parent).postMessage({ type: 'HYDRATE_JSON', json: parsed, raw }, '*');
     toast('Matching JSON to template...', 'info');
   } else {
     applyAIPayload(parsed, raw);
@@ -4382,8 +4382,8 @@ if (aiFileInput) {
       let parsed;
       try { parsed = JSON.parse(raw); } catch (e) { parsed = { __rawHtml: raw }; }
       $('forge-ai-import-modal').classList.remove('active');
-      if (window.parent && window.parent !== window && !parsed.__rawHtml) {
-        window.parent.postMessage({ type: 'HYDRATE_JSON', json: parsed, raw }, '*');
+      if (((window.parent && window.parent !== window) || window.opener) && !parsed.__rawHtml) {
+        (window.opener || window.parent).postMessage({ type: 'HYDRATE_JSON', json: parsed, raw }, '*');
         toast('Matching JSON to template...', 'info');
       } else {
         applyAIPayload(parsed, raw);
@@ -4477,8 +4477,8 @@ document.addEventListener('DOMContentLoaded', () => {
 <script>
   function initForgeBridge() {
     // 1. Tell the parent app we are ready to receive data
-    if (window.parent && window.parent !== window) {
-      window.parent.postMessage({ type: 'FORGE_EDITOR_READY' }, '*');
+    if ((window.parent && window.parent !== window) || window.opener) {
+      (window.opener || window.parent).postMessage({ type: 'FORGE_EDITOR_READY' }, '*');
     }
 
     // 2. Listen for HTML from the parent (e.g. from AI generation)

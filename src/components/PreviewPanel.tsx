@@ -10,9 +10,8 @@ interface PreviewPanelProps {
 
 export function PreviewPanel({ isGenerating, aiData, finalHtml }: PreviewPanelProps) {
   const showSkeleton = isGenerating;
-  const [isEditing, setIsEditing] = useState(false);
   const [editedHtml, setEditedHtml] = useState<string | null>(null);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const editorWindowRef = useRef<Window | null>(null);
 
   // Reset edited content when a completely new site is generated
   const prevFinalHtml = useRef(finalHtml);
@@ -25,11 +24,14 @@ export function PreviewPanel({ isGenerating, aiData, finalHtml }: PreviewPanelPr
 
   useEffect(() => {
     const handler = (e: MessageEvent) => {
-      if (e.data?.type === 'FORGE_EDITOR_READY' && finalHtml && iframeRef.current) {
-        iframeRef.current.contentWindow?.postMessage({
-          type: 'LOAD_HTML',
-          html: editedHtml || finalHtml
-        }, '*');
+      if (e.data?.type === 'FORGE_EDITOR_READY' && finalHtml) {
+        const targetWindow = e.source as WindowProxy;
+        if (targetWindow) {
+          targetWindow.postMessage({
+            type: 'LOAD_HTML',
+            html: editedHtml || finalHtml
+          }, '*');
+        }
       } else if (e.data?.type === 'UPDATE_HTML' && e.data.html) {
         // Always use the original finalHtml as the document shell so the
         // <head> (with Tailwind CDN, fonts, etc.) is always preserved.
@@ -57,14 +59,18 @@ export function PreviewPanel({ isGenerating, aiData, finalHtml }: PreviewPanelPr
   // Push updates to editor if a new site is generated while editor is open
   const lastSentHtml = useRef<string | null>(null);
   useEffect(() => {
-    if (isEditing && finalHtml && iframeRef.current && lastSentHtml.current !== finalHtml) {
-       iframeRef.current.contentWindow?.postMessage({
+    if (finalHtml && editorWindowRef.current && !editorWindowRef.current.closed && lastSentHtml.current !== finalHtml) {
+       editorWindowRef.current.postMessage({
           type: 'LOAD_HTML',
           html: finalHtml
        }, '*');
        lastSentHtml.current = finalHtml;
     }
-  }, [finalHtml, isEditing]);
+  }, [finalHtml]);
+
+  const openEditor = () => {
+    editorWindowRef.current = window.open("/editor/index.html", "ForgeEditor");
+  };
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col min-h-0">
@@ -79,16 +85,16 @@ export function PreviewPanel({ isGenerating, aiData, finalHtml }: PreviewPanelPr
           {isGenerating
             ? "✦ AI is generating your site…"
             : aiData
-            ? (isEditing ? "Editing in FORGE Pro" : "Preview: Generated via AI")
+            ? "Preview: Generated via AI"
             : "Preview: Waiting for input…"}
         </div>
         <div className="w-1/3 flex justify-end">
           {finalHtml && !isGenerating && (
             <button
-              onClick={() => setIsEditing(!isEditing)}
+              onClick={openEditor}
               className="text-xs px-3 py-1.5 bg-indigo-600 text-white font-medium rounded-md hover:bg-indigo-700 transition-colors shadow-sm"
             >
-              {isEditing ? "View Preview" : "Edit in FORGE Pro"}
+              Open Editor in New Tab
             </button>
           )}
         </div>
@@ -98,22 +104,12 @@ export function PreviewPanel({ isGenerating, aiData, finalHtml }: PreviewPanelPr
       {showSkeleton ? (
         <PreviewSkeleton />
       ) : finalHtml ? (
-        isEditing ? (
-          <iframe
-            ref={iframeRef}
-            src="/editor/index.html"
-            className="flex-1 w-full border-none"
-            title="FORGE Pro Editor"
-            style={{ display: "block" }}
-          />
-        ) : (
-          <iframe
-            srcDoc={editedHtml || finalHtml}
-            className="flex-1 w-full border-none"
-            title="Website Preview"
-            style={{ display: "block" }}
-          />
-        )
+        <iframe
+          srcDoc={editedHtml || finalHtml}
+          className="flex-1 w-full border-none"
+          title="Website Preview"
+          style={{ display: "block" }}
+        />
       ) : (
         <div className="flex-1 flex flex-col items-center justify-center text-gray-400 p-6 text-center">
           <svg className="w-16 h-16 mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
